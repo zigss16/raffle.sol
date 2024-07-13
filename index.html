@@ -7,25 +7,42 @@
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
-    <h1>NFT Raffle</h1>
-    <button id="connectWalletButton">Connect Wallet</button>
-    <p id="walletAddress">Wallet Address: Not Connected</p>
+    <header>
+        <h1>NFT Raffle</h1>
+    </header>
 
-    <button id="raffleButton" style="display: none;">Create Raffle</button>
-    <button id="shareButton" style="display: none;">Share Raffle Link</button>
+    <section id="landingPage">
+        <h2>Welcome to NFT Raffle</h2>
+        <p>Follow the instructions below to use our platform:</p>
+        <ol>
+            <li>Click the "Connect Wallet" button to connect your Solana wallet.</li>
+            <li>Once connected, select an NFT from your wallet to create a raffle.</li>
+            <li>Set the ticket price and end time for your raffle.</li>
+            <li>Click "Create Raffle" to start your raffle.</li>
+            <li>Share your raffle link using the "Share Raffle Link" button.</li>
+            <li>Check the "Active Raffles" and "Past Raffles" sections to see ongoing and past raffles.</li>
+        </ol>
+        <button id="connectWalletButton">Connect Wallet</button>
+        <p id="walletAddress">Wallet Address: Not Connected</p>
+    </section>
 
-    <div id="raffleForm">
-        <h2>Create Raffle</h2>
-        <div id="nftList"></div>
-        <input type="number" id="ticketPrice" placeholder="Ticket Price (in SOL)" />
-        <input type="datetime-local" id="raffleEndTime" placeholder="End Time" />
-        <button id="createRaffleButton">Create Raffle</button>
-        <div id="timer"></div>
-    </div>
+    <section id="raffleSection" style="display: none;">
+        <button id="raffleButton">Create Raffle</button>
+        <button id="shareButton">Share Raffle Link</button>
 
-    <p id="raffleStatus"></p>
-    <div id="activeRaffles"></div>
-    <div id="pastRaffles"></div>
+        <div id="raffleForm">
+            <h2>Create Raffle</h2>
+            <div id="nftList"></div>
+            <input type="number" id="ticketPrice" placeholder="Ticket Price (in SOL)" />
+            <input type="datetime-local" id="raffleEndTime" placeholder="End Time" />
+            <button id="createRaffleButton">Create Raffle</button>
+            <div id="timer"></div>
+        </div>
+
+        <p id="raffleStatus"></p>
+        <div id="activeRaffles"></div>
+        <div id="pastRaffles"></div>
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
@@ -43,8 +60,7 @@
                     const resp = await window.solana.connect();
                     walletAddress = resp.publicKey.toString();
                     document.getElementById('walletAddress').innerText = `Wallet Address: ${walletAddress}`;
-                    document.getElementById('raffleButton').style.display = 'block';
-                    document.getElementById('shareButton').style.display = 'block';
+                    document.getElementById('raffleSection').style.display = 'block';
                     await fetchNfts();
                     await fetchActiveRaffles();
                     await fetchPastRaffles();
@@ -188,24 +204,20 @@
         }
 
         function notifyUser(message) {
-            const notification = document.createElement('div');
-            notification.innerText = message;
-            notification.style.position = 'fixed';
-            notification.style.top = '20px';
-            notification.style.right = '20px';
-            notification.style.backgroundColor = '#1DA1F2';
-            notification.style.color = '#fff';
-            notification.style.padding = '10px';
-            notification.style.borderRadius = '5px';
-            document.body.appendChild(notification);
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 3000);
+            if (Notification.permission === 'granted') {
+                new Notification(message);
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        new Notification(message);
+                    }
+                });
+            }
         }
 
         function shareRaffleLink() {
-            const raffleUrl = window.location.href; // Get current URL
-            const shareText = `Check out this active NFT raffle: ${raffleUrl}`;
+            const raffleLink = window.location.href;
+            const shareText = `Check out my NFT Raffle: ${raffleLink}`;
             const encodedShareText = encodeURIComponent(shareText);
             const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodedShareText}`;
             window.open(twitterShareUrl, '_blank');
