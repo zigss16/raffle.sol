@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFT Raffle</title>
+    <title>NFT Raffle Platform</title>
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
@@ -12,21 +12,34 @@
         <button id="connectWalletButton">Connect Wallet</button>
         <p id="walletAddress">Wallet Address: Not Connected</p>
 
-        <button id="raffleButton" style="display: none;">Create Raffle</button>
-        <button id="shareButton" style="display: none;">Share Raffle Link</button>
+        <div id="raffleActions" style="display: none;">
+            <button id="raffleButton">Create Raffle</button>
+            <button id="viewRafflesButton">View Raffles</button>
+        </div>
 
-        <div id="raffleForm">
+        <div id="raffleForm" style="display: none;">
             <h2>Create Raffle</h2>
             <div id="nftList"></div>
             <input type="number" id="ticketPrice" placeholder="Ticket Price (in SOL)" />
-            <input type="datetime-local" id="raffleEndTime" placeholder="End Time" />
+            <input type="datetime-local" id="raffleEndTime" />
             <button id="createRaffleButton">Create Raffle</button>
-            <div id="timer"></div>
+            <div id="raffleStatus"></div>
         </div>
 
-        <p id="raffleStatus"></p>
-        <div id="activeRaffles"></div>
-        <div id="pastRaffles"></div>
+        <div id="raffleDashboard" style="display: none;">
+            <h2>Active Raffles</h2>
+            <div id="activeRaffles"></div>
+            <h2>Past Raffles</h2>
+            <div id="pastRaffles"></div>
+        </div>
+
+        <div id="ticketPurchase" style="display: none;">
+            <h2>Buy Tickets</h2>
+            <div id="raffleList"></div>
+            <input type="number" id="ticketCount" placeholder="Number of Tickets" />
+            <button id="buyTicketButton">Buy Tickets</button>
+            <div id="purchaseStatus"></div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -35,6 +48,7 @@
         let nfts = [];
         let selectedNft = null;
         let countdownInterval;
+        let activeRaffles = [];
 
         async function connectWallet() {
             if (window.solana && window.solana.isPhantom) {
@@ -42,8 +56,7 @@
                     const resp = await window.solana.connect();
                     walletAddress = resp.publicKey.toString();
                     document.getElementById('walletAddress').innerText = `Wallet Address: ${walletAddress}`;
-                    document.getElementById('raffleButton').style.display = 'block';
-                    document.getElementById('shareButton').style.display = 'block';
+                    document.getElementById('raffleActions').style.display = 'block';
                     await fetchNfts();
                     await fetchActiveRaffles();
                     await fetchPastRaffles();
@@ -59,10 +72,8 @@
             document.getElementById('raffleStatus').innerText = 'Loading NFTs...';
             try {
                 const response = await axios.get(`YOUR_API_ENDPOINT?wallet=${walletAddress}`);
-                
                 if (response.status === 200 && Array.isArray(response.data)) {
                     nfts = response.data;
-
                     const nftList = document.getElementById('nftList');
                     nftList.innerHTML = '';
                     nfts.forEach((nft) => {
@@ -79,7 +90,6 @@
             } catch (error) {
                 console.error('Error fetching NFTs:', error);
                 document.getElementById('raffleStatus').innerText = 'Failed to fetch NFTs. Please check your wallet and try again.';
-                alert('Failed to fetch NFTs. Please check your wallet and try again.');
             } finally {
                 document.getElementById('raffleStatus').innerText = '';
             }
@@ -111,10 +121,8 @@
                 };
 
                 const response = await axios.post('YOUR_BACKEND_API_ENDPOINT/create-raffle', raffleData);
-                
                 if (response.data.success) {
                     document.getElementById('raffleStatus').innerText = `Raffle created for NFT: ${selectedNft.name} with ticket price: ${ticketPrice} SOL.`;
-                    startCountdown(endTime); // Start the countdown
                     await fetchActiveRaffles();
                 } else {
                     throw new Error(response.data.message);
@@ -125,50 +133,70 @@
             }
         }
 
-        function startCountdown(endTime) {
-            clearInterval(countdownInterval);
-            countdownInterval = setInterval(() => {
-                const now = Date.now();
-                const distance = endTime - now;
-
-                if (distance < 0) {
-                    clearInterval(countdownInterval);
-                    document.getElementById('timer').innerText = 'Raffle has ended!';
-                    document.getElementById('raffleStatus').innerText = `Raffle for ${selectedNft.name} has ended.`;
-                    document.getElementById('createRaffleButton').disabled = true; 
-                    return;
-                }
-
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                document.getElementById('timer').innerText = `Time Remaining: ${hours}h ${minutes}m ${seconds}s`;
-            }, 1000);
-        }
-
         async function fetchActiveRaffles() {
-            const activeRafflesDiv = document.getElementById('activeRaffles');
-            activeRafflesDiv.innerHTML = '<h3>Active Raffles</h3>';
             const response = await axios.get('YOUR_BACKEND_API_ENDPOINT/active-raffles');
-            response.data.forEach(raffle => {
+            activeRaffles = response.data;
+            const activeRafflesDiv = document.getElementById('activeRaffles');
+            activeRafflesDiv.innerHTML = '';
+
+            activeRaffles.forEach(raffle => {
                 const raffleItem = document.createElement('div');
                 raffleItem.className = 'raffleItem';
-                raffleItem.innerText = `NFT: ${raffle.nftName}, Ends: ${new Date(raffle.endTime).toLocaleString()}`;
+                raffleItem.innerHTML = `NFT: ${raffle.nftName}, Ticket Price: ${raffle.ticketPrice} SOL, Ends: ${new Date(raffle.endTime).toLocaleString()} 
+                <button onclick="showTicketPurchase(${raffle.id})">Buy Tickets</button>`;
                 activeRafflesDiv.appendChild(raffleItem);
             });
+
+            document.getElementById('raffleDashboard').style.display = 'block';
         }
 
         async function fetchPastRaffles() {
-            const pastRafflesDiv = document.getElementById('pastRaffles');
-            pastRafflesDiv.innerHTML = '<h3>Past Raffles</h3>';
             const response = await axios.get('YOUR_BACKEND_API_ENDPOINT/past-raffles');
+            const pastRafflesDiv = document.getElementById('pastRaffles');
+            pastRafflesDiv.innerHTML = '';
+
             response.data.forEach(raffle => {
                 const raffleItem = document.createElement('div');
                 raffleItem.className = 'raffleItem';
-                raffleItem.innerText = `NFT: ${raffle.nftName}, Ended: ${new Date(raffle.endTime).toLocaleString()}`;
+                raffleItem.innerHTML = `NFT: ${raffle.nftName}, Ended: ${new Date(raffle.endTime).toLocaleString()}`;
                 pastRafflesDiv.appendChild(raffleItem);
             });
+        }
+
+        function showTicketPurchase(raffleId) {
+            const raffle = activeRaffles.find(r => r.id === raffleId);
+            if (raffle) {
+                document.getElementById('raffleList').innerText = `Buy tickets for NFT: ${raffle.nftName}, Price: ${raffle.ticketPrice} SOL`;
+                document.getElementById('ticketPurchase').style.display = 'block';
+                document.getElementById('buyTicketButton').onclick = () => buyTickets(raffleId, raffle.ticketPrice);
+            }
+        }
+
+        async function buyTickets(raffleId, ticketPrice) {
+            const ticketCount = parseInt(document.getElementById('ticketCount').value);
+            if (isNaN(ticketCount) || ticketCount <= 0) {
+                alert('Please enter a valid number of tickets.');
+                return;
+            }
+
+            try {
+                const purchaseData = {
+                    walletAddress: walletAddress,
+                    raffleId: raffleId,
+                    ticketCount: ticketCount,
+                    totalCost: ticketCount * ticketPrice
+                };
+
+                const response = await axios.post('YOUR_BACKEND_API_ENDPOINT/buy-tickets', purchaseData);
+                if (response.data.success) {
+                    document.getElementById('purchaseStatus').innerText = `Successfully purchased ${ticketCount} tickets!`;
+                } else {
+                    throw new Error(response.data.message);
+                }
+            } catch (error) {
+                console.error('Error purchasing tickets:', error);
+                alert('Failed to purchase tickets. Please try again.');
+            }
         }
 
         document.getElementById('connectWalletButton').onclick = connectWallet;
@@ -180,17 +208,13 @@
                 .then(({ publicKey }) => {
                     walletAddress = publicKey.toString();
                     document.getElementById('walletAddress').innerText = `Wallet Address: ${walletAddress}`;
-                    document.getElementById('raffleButton').style.display = 'block';
-                    document.getElementById('shareButton').style.display = 'block';
+                    document.getElementById('raffleActions').style.display = 'block';
                     fetchNfts();
                     fetchActiveRaffles();
                     fetchPastRaffles();
-                })
-                .catch((err) => console.error('Connection error:', err));
-            } else {
-                alert("Please install Phantom Wallet!");
+                });
             }
-        }
+        };
     </script>
 </body>
 </html>
