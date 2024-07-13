@@ -12,9 +12,20 @@
         <button id="connectWalletButton">Connect Wallet</button>
         <p id="walletAddress">Wallet Address: Not Connected</p>
 
+        <div id="instructions" class="info-box">
+            <h2>How to Use the Platform</h2>
+            <ol>
+                <li>Connect your wallet using the button above.</li>
+                <li>View your NFTs and select one to create a raffle.</li>
+                <li>Set a ticket price and an end time for the raffle.</li>
+                <li>Click "Create Raffle" to list your NFT raffle.</li>
+                <li>Purchase tickets for active raffles from the dashboard.</li>
+            </ol>
+        </div>
+
         <div id="raffleActions" style="display: none;">
             <button id="raffleButton">Create Raffle</button>
-            <button id="viewRafflesButton">View Raffles</button>
+            <button id="viewRafflesButton">View Active Raffles</button>
         </div>
 
         <div id="raffleForm" style="display: none;">
@@ -23,7 +34,7 @@
             <input type="number" id="ticketPrice" placeholder="Ticket Price (in SOL)" />
             <input type="datetime-local" id="raffleEndTime" />
             <button id="createRaffleButton">Create Raffle</button>
-            <div id="raffleStatus"></div>
+            <div id="raffleStatus" class="status-message"></div>
         </div>
 
         <div id="raffleDashboard" style="display: none;">
@@ -38,7 +49,7 @@
             <div id="raffleList"></div>
             <input type="number" id="ticketCount" placeholder="Number of Tickets" />
             <button id="buyTicketButton">Buy Tickets</button>
-            <div id="purchaseStatus"></div>
+            <div id="purchaseStatus" class="status-message"></div>
         </div>
     </div>
 
@@ -47,7 +58,6 @@
         let walletAddress = '';
         let nfts = [];
         let selectedNft = null;
-        let countdownInterval;
         let activeRaffles = [];
 
         async function connectWallet() {
@@ -79,7 +89,7 @@
                     nfts.forEach((nft) => {
                         const nftItem = document.createElement('div');
                         nftItem.className = 'nftItem';
-                        nftItem.innerText = nft.name; // Ensure your API provides this
+                        nftItem.innerText = nft.name;
                         nftItem.onclick = () => selectNft(nftItem, nft);
                         nftList.appendChild(nftItem);
                     });
@@ -89,7 +99,7 @@
                 }
             } catch (error) {
                 console.error('Error fetching NFTs:', error);
-                document.getElementById('raffleStatus').innerText = 'Failed to fetch NFTs. Please check your wallet and try again.';
+                document.getElementById('raffleStatus').innerText = 'Failed to fetch NFTs. Please try again.';
             } finally {
                 document.getElementById('raffleStatus').innerText = '';
             }
@@ -201,20 +211,7 @@
 
         document.getElementById('connectWalletButton').onclick = connectWallet;
         document.getElementById('createRaffleButton').onclick = createRaffle;
-
-        window.onload = () => {
-            if (window.solana && window.solana.isPhantom) {
-                window.solana.connect({ onlyIfTrusted: true })
-                .then(({ publicKey }) => {
-                    walletAddress = publicKey.toString();
-                    document.getElementById('walletAddress').innerText = `Wallet Address: ${walletAddress}`;
-                    document.getElementById('raffleActions').style.display = 'block';
-                    fetchNfts();
-                    fetchActiveRaffles();
-                    fetchPastRaffles();
-                });
-            }
-        };
+        document.getElementById('viewRafflesButton').onclick = fetchActiveRaffles;
     </script>
 </body>
 </html>
