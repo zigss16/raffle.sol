@@ -29,7 +29,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        const platformFeeWallet = 'YOUR_WALLET_ADDRESS'; // Replace with your wallet address for collecting fees
+        const platformFeeWallet = '78UVfn2ptcByR1jRr7XG9rJD4wVcWuLbZ1SegQy4KAac'; // Wallet address for collecting fees
         const platformFee = 0.005; // 0.005 SOL platform fee
 
         let walletAddress = '';
@@ -215,7 +215,6 @@
         document.getElementById('createRaffleButton').addEventListener('click', createRaffle);
         document.getElementById('shareButton').addEventListener('click', shareRaffleLink);
 
-        // Fetch active and past raffles on page load
         window.addEventListener('load', async () => {
             await fetchActiveRaffles();
             await fetchPastRaffles();
