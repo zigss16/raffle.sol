@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Raffle</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <h1>NFT Raffle</h1>
+    <button id="connectWalletButton">Connect Wallet</button>
+    <p id="walletAddress">Wallet Address: Not Connected</p>
+
+    <button id="raffleButton" style="display: none;">Create Raffle</button>
+    <button id="shareButton" style="display: none;">Share Raffle Link</button>
+
+    <div id="raffleForm">
+        <h2>Create Raffle</h2>
+        <div id="nftList"></div>
+        <input type="number" id="ticketPrice" placeholder="Ticket Price (in SOL)" />
+        <input type="datetime-local" id="raffleEndTime" placeholder="End Time" />
+        <button id="createRaffleButton">Create Raffle</button>
+        <div id="timer"></div>
+    </div>
+
+    <p id="raffleStatus"></p>
+    <div id="activeRaffles"></div>
+    <div id="pastRaffles"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const platformFeeWallet = 'YOUR_WALLET_ADDRESS'; // Replace with your wallet address for collecting fees
+        const platformFee = 0.005; // 0.005 SOL platform fee
+
+        let walletAddress = '';
+        let nfts = [];
+        let selectedNft = null;
+        let countdownInterval;
+
+        async function connectWallet() {
+            if (window.solana && window.solana.isPhantom) {
+                try {
+                    const resp = await window.solana.connect();
+                    walletAddress = resp.publicKey.toString();
+                    document.getElementById('walletAddress').innerText = `Wallet Address: ${walletAddress}`;
+                    document.getElementById('raffleButton').style.display = 'block';
+                    document.getElementById('shareButton').style.display = 'block';
+                    await fetchNfts();
+                    await fetchActiveRaffles();
+                    await fetchPastRaffles();
+                } catch (err) {
+                    console.error('Connection error:', err);
+                }
+            } else {
+                alert("Please install Phantom Wallet!");
+            }
+        }
+
+        async function fetchNfts() {
+            document.getElementById('raffleStatus').innerText = 'Loading NFTs...';
+            try {
+                const response = await axios.get(`YOUR_API_ENDPOINT?wallet=${walletAddress}`);
+                nfts = response.data;
+
+                const nftList = document.getElementById('nftList');
+                nftList.innerHTML = '';
+                nfts.forEach((nft) => {
+                    const nftItem = document.createElement('div');
+                    nftItem.className = 'nftItem';
+
+                    const nftImage = document.createElement('img');
+                    nftImage.src = nft.imageUrl; // Ensure your API provides this
+                    nftImage.alt = nft.name;
+                    nftImage.className = 'nftImage';
+                    nftImage.style.width = '100%'; // Adjust image size
+                    nftItem.appendChild(nftImage);
+                    nftItem.appendChild(document.createTextNode(nft.name));
+                    nftItem.onclick = () => selectNft(nftItem, nft);
+                    nftList.appendChild(nftItem);
+                });
+                document.getElementById('raffleForm').style.display = 'flex';
+            } catch (error) {
+                console.error('Error fetching NFTs:', error);
+                alert('Failed to fetch NFTs. Please try again.');
+            } finally {
+                document.getElementById('raffleStatus').innerText = '';
+            }
+        }
+
+        function selectNft(nftItem, nft) {
+            const nftItems = document.querySelectorAll('.nftItem');
+            nftItems.forEach(item => item.classList.remove('selected'));
+            nftItem.classList.add('selected');
+            selectedNft = nft;
+        }
+
+        async function createRaffle() {
+            const ticketPrice = parseFloat(document.getElementById('ticketPrice').value);
+            const endTime = new Date(document.getElementById('raffleEndTime').value).getTime();
+            const currentTime = Date.now();
+
+            if (!selectedNft || isNaN(ticketPrice) || ticketPrice <= 0 || endTime <= currentTime) {
+                alert('Please select an NFT, enter a valid ticket price, and set a future end time.');
+                return;
+            }
+
+            try {
+                const raffleData = {
+                    walletAddress: walletAddress,
+                    nftAddress: selectedNft.address,
+                    ticketPrice: ticketPrice,
+                    endTime: endTime
+                };
+
+                // Add platform fee transaction here
+                await window.solana.request({
+                    method: "solana_sendTransaction",
+                    params: [
+                        {
+                            from: walletAddress,
+                            to: platformFeeWallet,
+                            value: platformFee * 1e9, // SOL to lamports
+                        },
+                    ],
+                });
+
+                const response = await axios.post('YOUR_BACKEND_API_ENDPOINT/create-raffle', raffleData);
+                
+                if (response.data.success) {
+                    document.getElementById('raffleStatus').innerText = `Raffle created for NFT: ${selectedNft.name} with ticket price: ${ticketPrice} SOL.`;
+                    notifyUser(`Raffle created for ${selectedNft.name}.`);
+                    startCountdown(endTime); // Start the countdown
+                    await fetchActiveRaffles();
+                } else {
+                    throw new Error(response.data.message);
+                }
+            } catch (error) {
+                console.error('Error creating raffle:', error);
+                alert('Failed to create raffle. Please try again.');
+            }
+        }
+
+        function startCountdown(endTime) {
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                const now = Date.now();
+                const distance = endTime - now;
+
+                if (distance < 0) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('timer').innerText = 'Raffle has ended!';
+                    document.getElementById('raffleStatus').innerText = `Raffle for ${selectedNft.name} has ended.`;
+                    notifyUser(`Raffle for ${selectedNft.name} has ended.`);
+                    document.getElementById('createRaffleButton').disabled = true; 
+                    return;
+                }
+
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                document.getElementById('timer').innerText = `Time Remaining: ${hours}h ${minutes}m ${seconds}s`;
+            }, 1000);
+        }
+
+        async function fetchActiveRaffles() {
+            const activeRafflesDiv = document.getElementById('activeRaffles');
+            activeRafflesDiv.innerHTML = '<h3>Active Raffles</h3>';
+            const response = await axios.get('YOUR_BACKEND_API_ENDPOINT/active-raffles');
+            response.data.forEach(raffle => {
+                const raffleItem = document.createElement('div');
+                raffleItem.className = 'raffleItem';
+                raffleItem.innerText = `NFT: ${raffle.nftName}, Ends: ${new Date(raffle.endTime).toLocaleString()}`;
+                activeRafflesDiv.appendChild(raffleItem);
+            });
+        }
+
+        async function fetchPastRaffles() {
+            const pastRafflesDiv = document.getElementById('pastRaffles');
+            pastRafflesDiv.innerHTML = '<h3>Past Raffles</h3>';
+            const response = await axios.get('YOUR_BACKEND_API_ENDPOINT/past-raffles');
+            response.data.forEach(raffle => {
+                const raffleItem = document.createElement('div');
+                raffleItem.className = 'raffleItem';
+                raffleItem.innerText = `NFT: ${raffle.nftName}, Ended: ${new Date(raffle.endTime).toLocaleString()}`;
+                pastRafflesDiv.appendChild(raffleItem);
+            });
+        }
+
+        function notifyUser(message) {
+            const notification = document.createElement('div');
+            notification.innerText = message;
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.backgroundColor = '#1DA1F2';
+            notification.style.color = '#fff';
+            notification.style.padding = '10px';
+            notification.style.borderRadius = '5px';
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 3000);
+        }
+
+        function shareRaffleLink() {
+            const raffleUrl = window.location.href; // Get current URL
+            const shareText = `Check out this active NFT raffle: ${raffleUrl}`;
+            const encodedShareText = encodeURIComponent(shareText);
+            const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodedShareText}`;
+            window.open(twitterShareUrl, '_blank');
+        }
+
+        document.getElementById('connectWalletButton').addEventListener('click', connectWallet);
+        document.getElementById('createRaffleButton').addEventListener('click', createRaffle);
+        document.getElementById('shareButton').addEventListener('click', shareRaffleLink);
+
+        // Fetch active and past raffles on page load
+        window.addEventListener('load', async () => {
+            await fetchActiveRaffles();
+            await fetchPastRaffles();
+        });
+    </script>
+</body>
+</html>
