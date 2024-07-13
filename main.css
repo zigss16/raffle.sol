@@ -1,69 +1,72 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
-    color: #333;
+    background-color: black;
+    color: gold;
     margin: 0;
     padding: 20px;
-    text-align: center; /* Center align all text */
+    text-align: center;
 }
 
 h1, h2, h3 {
-    color: #1DA1F2;
-    text-align: center; /* Center align headers */
+    color: gold;
 }
 
 button {
-    background-color: #1DA1F2;
-    color: white;
+    background-color: gold;
+    color: black;
     border: none;
     padding: 10px 20px;
     cursor: pointer;
     font-size: 16px;
     border-radius: 5px;
     margin-top: 10px;
-    text-align: center; /* Center align buttons */
+    text-align: center;
 }
 
 button:hover {
-    background-color: #0d8ae5;
+    background-color: #b8860b;
 }
 
 #raffleForm {
     display: none;
     margin-top: 20px;
-    text-align: center; /* Center align raffle form */
+    text-align: center;
 }
 
 #nftList {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    justify-content: center; /* Center align NFT list */
+    justify-content: center;
     margin-top: 10px;
 }
 
 .nftItem {
-    border: 1px solid #ccc;
+    border: 1px solid gold;
     padding: 10px;
     cursor: pointer;
     border-radius: 5px;
-    text-align: center; /* Center align NFT items */
+    text-align: center;
+    background-color: black;
+    color: gold;
 }
 
 .nftItem.selected {
-    border-color: #1DA1F2;
+    border-color: gold;
 }
 
 .raffleItem {
     margin-top: 10px;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid gold;
     border-radius: 5px;
-    text-align: center; /* Center align raffle items */
+    text-align: center;
+    background-color: black;
+    color: gold;
 }
 
 #timer {
     margin-top: 10px;
     font-weight: bold;
-    text-align: center; /* Center align timer */
+    text-align: center;
 }
