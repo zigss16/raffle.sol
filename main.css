@@ -1,14 +1,31 @@
 body {
-    font-family: Arial, sans-serif;
     background-color: black;
     color: gold;
-    margin: 0;
-    padding: 20px;
+    font-family: 'Arial', sans-serif;
     text-align: center;
 }
 
-h1, h2, h3 {
-    color: gold;
+header {
+    padding: 20px;
+}
+
+h1 {
+    font-size: 2.5em;
+    margin-bottom: 0.5em;
+}
+
+h2 {
+    font-size: 2em;
+    margin: 20px 0;
+}
+
+h3 {
+    margin: 20px 0;
+}
+
+p, ol {
+    font-size: 1.2em;
+    margin: 10px 0;
 }
 
 button {
@@ -16,57 +33,83 @@ button {
     color: black;
     border: none;
     padding: 10px 20px;
+    font-size: 1em;
     cursor: pointer;
-    font-size: 16px;
     border-radius: 5px;
-    margin-top: 10px;
-    text-align: center;
+    transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: #b8860b;
-}
-
-#raffleForm {
-    display: none;
-    margin-top: 20px;
-    text-align: center;
+    background-color: #ffd700; /* Slightly darker gold */
 }
 
 #nftList {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
     justify-content: center;
-    margin-top: 10px;
+    margin: 20px 0;
 }
 
 .nftItem {
     border: 1px solid gold;
     padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+    background-color: black;
+    color: gold;
+    width: 200px; /* Set a fixed width for NFT items */
     cursor: pointer;
-    border-radius: 5px;
-    text-align: center;
-    background-color: black;
-    color: gold;
+    transition: transform 0.2s;
 }
 
-.nftItem.selected {
-    border-color: gold;
+.nftItem:hover {
+    transform: scale(1.05);
 }
 
-.raffleItem {
-    margin-top: 10px;
+.nftImage {
+    max-width: 150px; /* Adjust as needed */
+    max-height: 150px;
+    margin-bottom: 10px;
+}
+
+.selected {
+    border: 2px solid #ffd700; /* Highlight color for selected NFT */
+}
+
+#raffleForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+}
+
+input[type="number"],
+input[type="datetime-local"] {
     padding: 10px;
-    border: 1px solid gold;
+    margin: 5px;
     border-radius: 5px;
-    text-align: center;
+    border: 1px solid gold;
     background-color: black;
     color: gold;
+}
+
+input[type="number"]:focus,
+input[type="datetime-local"]:focus {
+    outline: none;
+    border: 1px solid #ffd700;
 }
 
 #timer {
-    margin-top: 10px;
-    font-weight: bold;
-    text-align: center;
+    margin: 20px 0;
+    font-size: 1.2em;
 }
+
+.raffleItem {
+    border: 1px solid gold;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+    background-color: black;
+    color: gold;
+}
+
