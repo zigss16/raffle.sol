@@ -20,7 +20,8 @@
             padding: 20px;
         }
 
-        h1, h2 {
+        h1,
+        h2 {
             color: gold;
         }
 
@@ -33,21 +34,24 @@
             margin: 10px;
         }
 
-        .info-box, .status-message {
+        .info-box,
+        .status-message {
             background-color: #333;
             padding: 20px;
             margin: 20px 0;
             border-radius: 10px;
         }
 
-        .nftItem, .raffleItem {
+        .nftItem,
+        .raffleItem {
             padding: 10px;
             border: 1px solid gold;
             margin: 10px;
             cursor: pointer;
         }
 
-        .nftItem.selected, .raffleItem:hover {
+        .nftItem.selected,
+        .raffleItem:hover {
             background-color: gold;
             color: black;
         }
@@ -129,7 +133,7 @@
         async function fetchNfts() {
             document.getElementById('raffleStatus').innerText = 'Loading NFTs...';
             try {
-                const response = await axios.get(`YOUR_API_ENDPOINT?wallet=${walletAddress}`);
+                const response = await axios.get(`https://mock-api/nfts?wallet=${walletAddress}`);
                 if (response.status === 200 && Array.isArray(response.data)) {
                     nfts = response.data;
                     const nftList = document.getElementById('nftList');
@@ -178,7 +182,7 @@
                     endTime: endTime
                 };
 
-                const response = await axios.post('YOUR_BACKEND_API_ENDPOINT/create-raffle', raffleData);
+                const response = await axios.post('https://mock-api/create-raffle', raffleData);
                 if (response.data.success) {
                     document.getElementById('raffleStatus').innerText = `Raffle created for NFT: ${selectedNft.name} with ticket price: ${ticketPrice} SOL.`;
                     await fetchActiveRaffles();
@@ -192,33 +196,41 @@
         }
 
         async function fetchActiveRaffles() {
-            const response = await axios.get('YOUR_BACKEND_API_ENDPOINT/active-raffles');
-            activeRaffles = response.data;
-            const activeRafflesDiv = document.getElementById('activeRaffles');
-            activeRafflesDiv.innerHTML = '';
+            try {
+                const response = await axios.get('https://mock-api/active-raffles');
+                activeRaffles = response.data;
+                const activeRafflesDiv = document.getElementById('activeRaffles');
+                activeRafflesDiv.innerHTML = '';
 
-            activeRaffles.forEach(raffle => {
-                const raffleItem = document.createElement('div');
-                raffleItem.className = 'raffleItem';
-                raffleItem.innerHTML = `NFT: ${raffle.nftName}, Ticket Price: ${raffle.ticketPrice} SOL, Ends: ${new Date(raffle.endTime).toLocaleString()} 
-                <button onclick="showTicketPurchase(${raffle.id})">Buy Tickets</button>`;
-                activeRafflesDiv.appendChild(raffleItem);
-            });
+                activeRaffles.forEach(raffle => {
+                    const raffleItem = document.createElement('div');
+                    raffleItem.className = 'raffleItem';
+                    raffleItem.innerHTML = `NFT: ${raffle.nftName}, Ticket Price: ${raffle.ticketPrice} SOL, Ends: ${new Date(raffle.endTime).toLocaleString()}
+                    <button onclick="showTicketPurchase(${raffle.id})">Buy Tickets</button>`;
+                    activeRafflesDiv.appendChild(raffleItem);
+                });
 
-            document.getElementById('raffleDashboard').style.display = 'block';
+                document.getElementById('raffleDashboard').style.display = 'block';
+            } catch (error) {
+                console.error('Error fetching active raffles:', error);
+            }
         }
 
         async function fetchPastRaffles() {
-            const response = await axios.get('YOUR_BACKEND_API_ENDPOINT/past-raffles');
-            const pastRafflesDiv = document.getElementById('pastRaffles');
-            pastRafflesDiv.innerHTML = '';
+            try {
+                const response = await axios.get('https://mock-api/past-raffles');
+                const pastRafflesDiv = document.getElementById('pastRaffles');
+                pastRafflesDiv.innerHTML = '';
 
-            response.data.forEach(raffle => {
-                const raffleItem = document.createElement('div');
-                raffleItem.className = 'raffleItem';
-                raffleItem.innerHTML = `NFT: ${raffle.nftName}, Ended: ${new Date(raffle.endTime).toLocaleString()}`;
-                pastRafflesDiv.appendChild(raffleItem);
-            });
+                response.data.forEach(raffle => {
+                    const raffleItem = document.createElement('div');
+                    raffleItem.className = 'raffleItem';
+                    raffleItem.innerHTML = `NFT: ${raffle.nftName}, Ended: ${new Date(raffle.endTime).toLocaleString()}`;
+                    pastRafflesDiv.appendChild(raffleItem);
+                });
+            } catch (error) {
+                console.error('Error fetching past raffles:', error);
+            }
         }
 
         function showTicketPurchase(raffleId) {
@@ -245,7 +257,7 @@
                     totalCost: ticketCount * ticketPrice
                 };
 
-                const response = await axios.post('YOUR_BACKEND_API_ENDPOINT/buy-tickets', purchaseData);
+                const response = await axios.post('https://mock-api/buy-tickets', purchaseData);
                 if (response.data.success) {
                     document.getElementById('purchaseStatus').innerText = `Successfully purchased ${ticketCount} tickets!`;
                 } else {
